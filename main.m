@@ -34,8 +34,10 @@ function main
 %                end
 %                 x = loglik(:,dim);
 %                 c = find(x==max(x));
-%                 result(dim) = c;
+%                 result(dim,1) = c;
+%                 result(dim,2) = max(x);
 %            end
+%            result
 %            if (i+1 == mode(result))
 %                count  = count + 1;
 %            end
@@ -44,7 +46,7 @@ function main
 %    count / total_count
 end
 
-function data = getData(mode, class)
+function data = getDataShort(mode, class)
     if strcmp(mode, 'test')
         s = what(['/Users/zhangchi8620/Codes/HMMall/data/class',int2str(class),'_test/']); %look in current directory
     elseif strcmp(mode, 'train')
@@ -66,7 +68,7 @@ function data = getData(mode, class)
     end
 end
 
-function data = getDataAll(mode, class)
+function data = getData(mode, class)
     if strcmp(mode, 'test')
         s = what(['/Users/zhangchi8620/Codes/HMMall/data/class',int2str(class),'_test']); %look in current directory
     elseif strcmp(mode, 'train')
