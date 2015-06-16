@@ -12,38 +12,43 @@ function main
 %    end
     
 %    train each dim
-   O = 1;
-   for i = 0:2
-       fprintf('class: %d\n', i+1);
-       models(i+1,:) = trainEachDim(i); 
-   end
-   save('models.mat', 'models');
-%%%%%%%%%%%%%% test %%%%%%%%%%%%%%
-%    load models;
-%    count = 0;
-%    total_count = 0;
-%    for i = 0 : 2
-%        testData = getData('test', i);
-%        total_count = total_count + size(testData,3);
-%        for n = 1 : size(testData, 3)
-%            for dim = 1 : 14
-%                for j = 1 : 3
-%                 gmm = models(j, dim);
-%                 data = testData(dim,:,n);
-%                 loglik(j, dim) = mhmm_logprob(data ,gmm.prior, gmm.transmat,gmm.mu, gmm.sigma, gmm.mixmat);
-%                end
-%                 x = loglik(:,dim);
-%                 c = find(x==max(x));
-%                 result(dim,1) = c;
-%                 result(dim,2) = max(x);
-%            end
-%            result
-%            if (i+1 == mode(result))
-%                count  = count + 1;
-%            end
-%        end    
+%    O = 1;
+%    for i = 0:2
+%        fprintf('class: %d\n', i+1);
+%        models(i+1,:) = trainEachDim(i); 
 %    end
-%    count / total_count
+%    save('models.mat', 'models');
+%%%%%%%%%%%%%% test %%%%%%%%%%%%%%
+   load models;
+   count = 0;
+   total_count = 0;
+   for i = 0 : 2
+       testData = getData('test', i);
+       total_count = total_count + size(testData,3);
+       for n = 1 : size(testData, 3)
+           for dim = 1 : 14
+               for j = 1 : 3
+                gmm = models(j, dim);
+                data = testData(dim,:,n);
+                loglik(j, dim) = mhmm_logprob(data ,gmm.prior, gmm.transmat,gmm.mu, gmm.sigma, gmm.mixmat);
+               end
+                x = loglik(:,dim);
+                c = find(x==max(x));
+               
+                if size(c,1) > 1
+                    result(dim,1) = randi([1 size(c,1)],1,1);
+                else
+                    result(dim,1) = c;
+                end
+                result(dim,2) = max(x);
+           end
+%            result
+           if (i+1 == mode(result(:,1)))
+               count  = count + 1;
+           end
+       end    
+   end
+   count / total_count
 end
 
 function data = getDataShort(mode, class)
@@ -141,7 +146,7 @@ function gmm = trainAllDim(class)
 end
 
 function models = trainEachDim(class)
-    global T M Q O
+    global M Q O
 
     tmpdata = getData('train', class);
 
