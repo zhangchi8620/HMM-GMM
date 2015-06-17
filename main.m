@@ -3,7 +3,6 @@ function main
   T = 89;         %Number of vectors in a sequence 
   M = 3;          %Number of mixtures 
   Q = 3;          %Number of states 
-  
 %%%%%%%%%%%%%% train %%%%%%%%%%%%%%
    % train 14 dims together
 %    O = 14;          %Number of coefficients in a vector 
@@ -19,12 +18,19 @@ function main
 %    end
 %    save('models.mat', 'models');
 %%%%%%%%%%%%%% test %%%%%%%%%%%%%%
+[p,confMatrix] = test();
+p
+confMatrix
+% %% AdaBoost
+% weakTrainData();
+end
+function [per,confMatrix] = test()
    load models;
    count = 0;
    total_count = 0;
-   for i = 0 : 2
-       testData = getData('test', i);
-       total_count = total_count + size(testData,3);
+   confMatrix = zeros(3,3);
+   for i = 1 : 3
+       testData = getData('test', i-1);
        for n = 1 : size(testData, 3)
            for dim = 1 : 14
                for j = 1 : 3
@@ -33,22 +39,24 @@ function main
                 loglik(j, dim) = mhmm_logprob(data ,gmm.prior, gmm.transmat,gmm.mu, gmm.sigma, gmm.mixmat);
                end
                 x = loglik(:,dim);
-                c = find(x==max(x));
-               
+                c = find(x==max(x));               
                 if size(c,1) > 1
                     result(dim,1) = randi([1 size(c,1)],1,1);
                 else
                     result(dim,1) = c;
                 end
-                result(dim,2) = max(x);
+                result(dim,2) = max(x);                
            end
-%            result
-           if (i+1 == mode(result(:,1)))
+           if (i == mode(result(:,1)))
                count  = count + 1;
            end
-       end    
+           confMatrix(i,mode(result(:,1))) = confMatrix(i,mode(result(:,1))) + 1; 
+           total_count = total_count + 1;
+           llm(i,n).m = loglik;
+       end  
    end
-   count / total_count
+    per =  count / total_count;
+    save('llm.mat', 'llm');
 end
 
 function data = getDataShort(mode, class)
@@ -182,4 +190,35 @@ function models = trainEachDim(class)
         gmm.mixmat = mixmat1;
         models(dim) = gmm;
     end
+end
+
+function [trainData, trainLabel, testData, testLabel]=weakTrainData()
+    [trainData, trainLabel]=reassembleData('train');
+    [testData, testLabel]=reassembleData('test');
+    save('trainData.mat', 'trainData');
+    save('trainLabel.mat', 'trainLabel');
+    save('testData.mat', 'testData');
+    save('testLabel.mat', 'testLabel');
+end
+
+function [data, label] = reassembleData(mode)
+    load models;
+    data = [];
+    label = [];
+    for c = 0 : 2
+        rawData = getData(mode, c);
+        for q = 1 : size(rawData ,3)
+            tmpdata = rawData(:,:,q);
+            for i = 1 : size(models, 1)
+                for j = 1 : size(models, 2)
+                    gmm = models(i,j);
+                    loglik(i,j,q) = mhmm_logprob(tmpdata(j,:), gmm.prior, gmm.transmat, gmm.mu, gmm.sigma, gmm.mixmat);
+                end
+            end
+        end
+        tmp = reshape(loglik, [size(loglik,1)*size(loglik,2) size(loglik, 3)]);
+        data = [data, tmp];   
+        label = [label, repmat(c, [1, size(tmp, 2)])];
+    end
+
 end
