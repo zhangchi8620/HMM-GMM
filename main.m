@@ -10,15 +10,15 @@ function main
 %    end
     
 %    train each dim
-%    for i = 0:2
-%        fprintf('class: %d\n', i+1);
-%        [models(i+1,:), loglik(i+1).m] = trainEachDim(i); 
-%    end
-%    save('models.mat', 'models');
+   for i = 0:2
+       fprintf('class: %d\n', i+1);
+       [models(i+1,:), loglik(i+1).m] = trainEachDim(i); 
+   end
+   save('models.mat', 'models');
 %%%%%%%%%%%%%% test %%%%%%%%%%%%%%
-[p,confMatrix] = test();
-p
-confMatrix
+% [p,confMatrix] = test();
+% p
+% confMatrix
 % %% AdaBoost
 % weakTrainData();
 end
@@ -88,7 +88,7 @@ function data = getData(mode, class)
         return;    
     end
     matfiles=s.mat;
-    maxLen=89;
+    maxLen=89*5;
 %     maxLen = 0;
 %     data = [];
 %     % count = 0;
