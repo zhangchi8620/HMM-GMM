@@ -1,6 +1,5 @@
 function main
-  global T M Q O
-  T = 89;         %Number of vectors in a sequence 
+  global M Q O
   M = 3;          %Number of mixtures 
   Q = 3;          %Number of states 
 %%%%%%%%%%%%%% train %%%%%%%%%%%%%%
@@ -11,10 +10,9 @@ function main
 %    end
     
 %    train each dim
-%    O = 1;
 %    for i = 0:2
 %        fprintf('class: %d\n', i+1);
-%        models(i+1,:) = trainEachDim(i); 
+%        [models(i+1,:), loglik(i+1).m] = trainEachDim(i); 
 %    end
 %    save('models.mat', 'models');
 %%%%%%%%%%%%%% test %%%%%%%%%%%%%%
@@ -90,34 +88,36 @@ function data = getData(mode, class)
         return;    
     end
     matfiles=s.mat;
-    maxLen = 0;
-    data = [];
-    % count = 0;
-    for a=1:numel(matfiles)
-        tmp=load(char(matfiles(a)));
-        tmp = tmp.filedata;
-        if size(tmp,1) > maxLen
-            maxLen = size(tmp,1);
-        end
-    end
+    maxLen=89;
+%     maxLen = 0;
+%     data = [];
+%     % count = 0;
+%     for a=1:numel(matfiles)
+%         tmp=load(char(matfiles(a)));
+%         tmp = tmp.filedata;
+%         if size(tmp,1) > maxLen
+%             maxLen = size(tmp,1);
+%         end
+%     end
     
-    data = zeros(14, maxLen, numel(matfiles));
+%     data = zeros(14, maxLen, numel(matfiles));
     for a=1:numel(matfiles)
         tmp=load(char(matfiles(a)));
         tmp = tmp.filedata;
-        data(:,1:size(tmp,1),a) = tmp';
+        tmp2 = imresize(tmp, [maxLen, size(tmp,2)]);
+%         figure; plot(tmp(:,1)); hold on; plot(tmp2(:,1),'r');
+        data(:,1:size(tmp2,1),a) = tmp2';
     end
     
 end
 
 
 function gmm = trainAllDim(class)
-    global T M Q O
+    global M Q O
     tmpdata = getData('train', class);
     
     %initial guess of parameters
       O = 14;          %Number of coefficients in a vector 
-      T = 89;         %Number of vectors in a sequence 
       nex =numel(matfiles);        %Number of sequences 
       M = 3;          %Number of mixtures 
       Q = 3;          %Number of states 
@@ -153,9 +153,9 @@ function gmm = trainAllDim(class)
     gmm.mixmat = mixmat1;
 end
 
-function models = trainEachDim(class)
+function [models, trace] = trainEachDim(class)
     global M Q O
-
+    O = 1;
     tmpdata = getData('train', class);
 
     for dim = 1 : 14
@@ -178,11 +178,11 @@ function models = trainEachDim(class)
           mixmat0 = mk_stochastic(rand(Q,M));
         end
 
-        [LL, prior1, transmat1, mu1, Sigma1, mixmat1] = ...
+        [LL, prior1, transmat1, mu1, Sigma1, mixmat1, ll_trace] = ...
             mhmm_em(data, prior0, transmat0, mu0, Sigma0, mixmat0, 'max_iter', 100, 'cov_type', cov_type);
 
-%         loglik = mhmm_logprob(data, prior1, transmat1, mu1, Sigma1, mixmat1);
-
+%         loglik_final(dim) = mhmm_logprob(data, prior1, transmat1, mu1, Sigma1, mixmat1);
+        trace(dim).m =ll_trace;
         gmm.prior = prior1;
         gmm.transmat = transmat1;
         gmm.mu = mu1;
